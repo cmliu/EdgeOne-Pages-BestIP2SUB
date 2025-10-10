@@ -490,7 +490,7 @@ export async function onRequest(context) {
 		const imgs = await 整理(env.IMG);
 		网站背景 = `background-image: url('${imgs[Math.floor(Math.random() * imgs.length)]}');`;
 	} else 网站背景 = '';
-	网络备案 = env.BEIAN || env.BY || 网络备案;
+	网络备案 = env.B64_BEIAN ? atob(env.B64_BEIAN) : (env.BEIAN || env.BY || 网络备案);
 	const userAgentHeader = request.headers.get('User-Agent');
 	const userAgent = userAgentHeader ? userAgentHeader.toLowerCase() : "null";
 	const url = new URL(request.url);
