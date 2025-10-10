@@ -490,7 +490,7 @@ export async function onRequest(context) {
 		const imgs = await 整理(env.IMG);
 		网站背景 = `background-image: url('${imgs[Math.floor(Math.random() * imgs.length)]}');`;
 	} else 网站背景 = '';
-	网络备案 = env.B64_BEIAN ? atob(env.B64_BEIAN) : (env.BEIAN || env.BY || 网络备案);
+	网络备案 = env.B64_BEIAN ? decodeBase64(env.B64_BEIAN) : (env.BEIAN || env.BY || 网络备案);
 	const userAgentHeader = request.headers.get('User-Agent');
 	const userAgent = userAgentHeader ? userAgentHeader.toLowerCase() : "null";
 	const url = new URL(request.url);
@@ -1460,4 +1460,16 @@ async function subHtml(request) {
 			"content-type": "text/html;charset=UTF-8",
 		},
 	});
+}
+
+function decodeBase64(base64String) {
+	// 1. 使用 atob 将 Base64 字符串解码为二进制字符串
+	const binaryString = atob(base64String);
+	// 2. 将二进制字符串的每个字符转换为对应的字节码，存入 Uint8Array
+	const bytes = new Uint8Array(binaryString.length);
+	for (let i = 0; i < binaryString.length; i++) {
+		bytes[i] = binaryString.charCodeAt(i);
+	}
+	// 3. 使用 TextDecoder 将字节数组按 UTF-8 编码解码为字符串
+	return new TextDecoder('utf-8').decode(bytes);
 }
