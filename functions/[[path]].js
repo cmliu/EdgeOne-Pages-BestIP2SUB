@@ -467,6 +467,10 @@ function utf8ToBase64(str) {
 // EdgeOne Pages 入口函数
 export async function onRequest(context) {
 	const { request, env } = context;
+	
+	console.log('=== 请求开始 ===');
+	console.log('请求 URL:', request.url);
+	console.log('请求方法:', request.method);
 
 	if (env.TOKEN) 快速订阅访问入口 = await 整理(env.TOKEN);
 	BotToken = env.TGTOKEN || BotToken;
@@ -495,6 +499,10 @@ export async function onRequest(context) {
 	const userAgent = userAgentHeader ? userAgentHeader.toLowerCase() : "null";
 	const url = new URL(request.url);
 	const format = url.searchParams.get('format') ? url.searchParams.get('format').toLowerCase() : "null";
+	
+	console.log('User-Agent:', userAgent);
+	console.log('URL pathname:', url.pathname);
+	console.log('URL search:', url.search);
 	let host = "";
 	let uuid = "";
 	let path = "";
@@ -617,6 +625,7 @@ export async function onRequest(context) {
 
 		await sendMessage(`#获取订阅 ${FileName}`, getClientIP(request), `UA: ${userAgentHeader}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
 	} else {
+		console.log('进入 URL 参数解析分支');
 		host = url.searchParams.get('host');
 		uuid = url.searchParams.get('uuid') || url.searchParams.get('password') || url.searchParams.get('pw');
 		path = url.searchParams.get('path');
@@ -630,6 +639,8 @@ export async function onRequest(context) {
 		隧道版本作者 = url.searchParams.get('edgetunnel') || url.searchParams.get('epeius') || 隧道版本作者;
 		获取代理IP = url.searchParams.get('proxyip') || 'false';
 
+		console.log('解析参数 - host:', host, 'uuid:', uuid, 'path:', path);
+
 		if (url.searchParams.has('alterid')) {
 			协议类型 = 'VMess';
 			额外ID = url.searchParams.get('alterid') || 额外ID;
@@ -639,8 +650,11 @@ export async function onRequest(context) {
 		} else if (url.searchParams.has('epeius') || url.searchParams.has('password') || url.searchParams.has('pw')) {
 			协议类型 = 'Trojan';
 		}
+		
+		console.log('协议类型:', 协议类型);
 
 		if (!url.pathname.includes("/sub") || !host || !uuid) {
+			console.log('条件检查失败 - pathname包含/sub:', url.pathname.includes("/sub"), 'host存在:', !!host, 'uuid存在:', !!uuid);
 			const envKey = env.URL302 ? 'URL302' : (env.URL ? 'URL' : null);
 			if (envKey) {
 				const URLs = await 整理(env[envKey]);
@@ -673,13 +687,17 @@ export async function onRequest(context) {
 		//"Subscription-Userinfo": `upload=${UD}; download=${UD}; total=${total}; expire=${expire}`,
 	};
 
+	console.log('准备生成订阅 - host:', host, 'uuid:', uuid?.substring(0, 8) + '...');
+	
 	if (host.toLowerCase().includes('notls') || host.toLowerCase().includes('worker') || host.toLowerCase().includes('trycloudflare')) noTLS = 'true';
 	noTLS = env.NOTLS || noTLS;
 	let subConverterUrl = generateFakeInfo(url.href, uuid, host);
 	console.log('初始化 subConverterUrl 长度:', subConverterUrl.length);
 	const isSubConverterRequest = request.headers.get('subconverter-request') || request.headers.get('subconverter-version') || userAgent.includes('subconverter');
+	console.log('是否为订阅转换器请求:', isSubConverterRequest);
 	if (isSubConverterRequest) alpn = '';
 	if (!isSubConverterRequest && MamaJustKilledAMan.some(PutAGunAgainstHisHeadPulledMyTriggerNowHesDead => userAgent.includes(PutAGunAgainstHisHeadPulledMyTriggerNowHesDead)) && MamaJustKilledAMan.length > 0) {
+		console.log('检测到屏蔽 UA，准备跳转或返回 HTML');
 		const envKey = env.URL302 ? 'URL302' : (env.URL ? 'URL' : null);
 		if (envKey) {
 			const URLs = await 整理(env[envKey]);
@@ -986,20 +1004,30 @@ export async function onRequest(context) {
 		console.log('正在请求订阅转换服务, URL 长度:', subConverterUrl.length, '服务器:', subConverter);
 		const subConverterResponse = await fetch(subConverterUrl, { headers: { 'User-Agent': `v2rayN/${FileName} (https://github.com/cmliu/EdgeOne-Pages-BestIP2SUB)` } });
 
+		console.log('订阅转换服务响应状态:', subConverterResponse.status, subConverterResponse.statusText);
+		
 		if (!subConverterResponse.ok) {
 			console.error('订阅转换服务请求失败:', subConverterResponse.status, subConverterResponse.statusText);
+			const errorText = await subConverterResponse.text();
+			console.error('错误响应内容:', errorText);
 			throw new Error(`Error fetching subConverterUrl: ${subConverterResponse.status} ${subConverterResponse.statusText}`);
 		}
 
 		let subConverterContent = await subConverterResponse.text();
+		console.log('订阅转换服务返回内容长度:', subConverterContent.length);
+		console.log('订阅转换服务返回内容前100字符:', subConverterContent.substring(0, 100));
 
 		if (协议类型 == 'Trojan' && (userAgent.includes('surge') || (format === 'surge' && !isSubConverterRequest)) && !userAgent.includes('cf-workers-sub')) {
+			console.log('应用 Surge 格式转换');
 			subConverterContent = surge(subConverterContent, host, path);
 		}
 		subConverterContent = revertFakeInfo(subConverterContent, uuid, host);
+		console.log('最终返回内容长度:', subConverterContent.length);
 		//if (!userAgent.includes('mozilla')) responseHeaders["Content-Disposition"] = `attachment; filename*=utf-8''${encodeURIComponent(FileName)}`;
 		return new Response(subConverterContent, { headers: responseHeaders });
 	} catch (error) {
+		console.error('捕获到错误:', error.message);
+		console.error('错误堆栈:', error.stack);
 		return new Response(`Error: ${error.message}`, {
 			status: 500,
 			headers: { 'content-type': 'text/plain; charset=utf-8' },
