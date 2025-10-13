@@ -676,6 +676,7 @@ export async function onRequest(context) {
 	if (host.toLowerCase().includes('notls') || host.toLowerCase().includes('worker') || host.toLowerCase().includes('trycloudflare')) noTLS = 'true';
 	noTLS = env.NOTLS || noTLS;
 	let subConverterUrl = generateFakeInfo(url.href, uuid, host);
+	console.log('初始化 subConverterUrl:', subConverterUrl);
 	const isSubConverterRequest = request.headers.get('subconverter-request') || request.headers.get('subconverter-version') || userAgent.includes('subconverter');
 	if (isSubConverterRequest) alpn = '';
 	if (!isSubConverterRequest && MamaJustKilledAMan.some(PutAGunAgainstHisHeadPulledMyTriggerNowHesDead => userAgent.includes(PutAGunAgainstHisHeadPulledMyTriggerNowHesDead)) && MamaJustKilledAMan.length > 0) {
@@ -695,15 +696,20 @@ export async function onRequest(context) {
 		return await subHtml(request);
 	} else if ((userAgent.includes('clash') || userAgent.includes('meta') || userAgent.includes('mihomo') || (format === 'clash' && !isSubConverterRequest)) && !userAgent.includes('nekobox') && !userAgent.includes('cf-workers-sub')) {
 		subConverterUrl = `${subProtocol}://${subConverter}/sub?target=clash&url=${encodeURIComponent(subConverterUrl)}&insert=false&config=${encodeURIComponent(subConfig)}&emoji=true&list=false&tfo=false&scv=${scv}&fdn=false&sort=false&new_name=true`;
+		console.log('Clash 订阅转换 URL:', subConverterUrl);
 	} else if ((userAgent.includes('sing-box') || userAgent.includes('singbox') || (format === 'singbox' && !isSubConverterRequest)) && !userAgent.includes('cf-workers-sub')) {
 		if (协议类型 == 'VMess' && url.href.includes('path=')) {
 			const 路径参数前部分 = url.href.split('path=')[0];
 			const parts = url.href.split('path=')[1].split('&');
 			const 路径参数后部分 = parts.slice(1).join('&') || '';
 			const 待处理路径参数 = url.href.split('path=')[1].split('&')[0] || '';
-			if (待处理路径参数.includes('%3F')) subConverterUrl = generateFakeInfo(路径参数前部分 + 'path=' + 待处理路径参数.split('%3F')[0] + '&' + 路径参数后部分, uuid, host);
+			if (待处理路径参数.includes('%3F')) {
+				subConverterUrl = generateFakeInfo(路径参数前部分 + 'path=' + 待处理路径参数.split('%3F')[0] + '&' + 路径参数后部分, uuid, host);
+				console.log('VMess 路径处理后 subConverterUrl:', subConverterUrl);
+			}
 		}
 		subConverterUrl = `${subProtocol}://${subConverter}/sub?target=singbox&url=${encodeURIComponent(subConverterUrl)}&insert=false&config=${encodeURIComponent(subConfig)}&emoji=true&list=false&tfo=false&scv=${scv}&fdn=false&sort=false&new_name=true`;
+		console.log('Sing-box 订阅转换 URL:', subConverterUrl);
 	} else {
 		if (host.includes('workers.dev')) {
 			if (临时中转域名接口) {
@@ -944,6 +950,7 @@ export async function onRequest(context) {
 			const 特洛伊Links = combinedContent.split('\n');
 			const 特洛伊LinksJ8 = generateFakeInfo(特洛伊Links.join('|'), uuid, host);
 			subConverterUrl = `${subProtocol}://${subConverter}/sub?target=surge&ver=4&url=${encodeURIComponent(特洛伊LinksJ8)}&insert=false&config=${encodeURIComponent(subConfig)}&emoji=true&list=false&xudp=false&udp=false&tfo=false&expand=true&scv=${scv}&fdn=false`;
+			console.log('Surge (Trojan) 订阅转换 URL:', subConverterUrl);
 		} else {
 			let base64Response;
 			try {
@@ -976,6 +983,7 @@ export async function onRequest(context) {
 	}
 
 	try {
+		console.log('正在请求订阅转换服务:', subConverterUrl);
 		const subConverterResponse = await fetch(subConverterUrl, { headers: { 'User-Agent': `v2rayN/${FileName} (https://github.com/cmliu/EdgeOne-Pages-BestIP2SUB)` } });
 
 		if (!subConverterResponse.ok) {
@@ -988,7 +996,7 @@ export async function onRequest(context) {
 			subConverterContent = surge(subConverterContent, host, path);
 		}
 		subConverterContent = revertFakeInfo(subConverterContent, uuid, host);
-		if (!userAgent.includes('mozilla')) responseHeaders["Content-Disposition"] = `attachment; filename*=utf-8''${encodeURIComponent(FileName)}`;
+		//if (!userAgent.includes('mozilla')) responseHeaders["Content-Disposition"] = `attachment; filename*=utf-8''${encodeURIComponent(FileName)}`;
 		return new Response(subConverterContent, { headers: responseHeaders });
 	} catch (error) {
 		return new Response(`Error: ${error.message}`, {
